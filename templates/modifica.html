@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Creative Colorlib SignUp Form</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+<!-- Custom Theme files -->
+
+<!-- //Soluzione per csv -->
+<link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+
+<!-- //Custom Theme files -->
+<!-- web font -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link href="//fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i" rel="stylesheet">
+<!-- //web font -->
+</head>
+<body>
+    <!-- main -->
+    <div class="main-w3layouts wrapper">
+        <h1>Creative SignUp Form</h1>
+        <div class="main-agileinfo">
+            <div class="agileits-top">
+                <form action="" method="post">
+                    {{ form.hidden_tag() }} <!-- csrf token for security -->
+                    <input class="text" type="text" name="title" required="" value ="{{todo.title}}">
+                    <select name="category" id="category" value="{{todo.category}}">
+                        <option value="1">Alto</option>
+                        <option value="2">Medio</option>
+                        <option value="3">Basso</option>
+                    </select>
+                    <input class="text" type="date" name="date" required=""  value="{{todo.date}}">
+                    <input class="text" type="time" name="time" required=""  value="{{todo.time}}">
+                    <button class="button button1" type="submit" name="taskModify" type="submit" value="{{ todo.id }}">MODIFY</button>
+
+                </form>
+            </div>
+        </div>
+        <!-- copyright -->
+        <!-- //copyright -->
+
+</body>
+</html>
