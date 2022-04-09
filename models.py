@@ -79,3 +79,19 @@ class Todo(db.Model):
         return 'Titolo =' + self.title + 'data =' + str(self.date) + 'time =' + str(self.time) + 'user =' +  str(self.user_id) + 'categoria =' + self.category
     def __repr__(self):
         return '<ToDo {}>'.format(self.title)
+
+
+#CLASSE Project
+class Project(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(140))
+    description = db.Column(db.String())
+    image = db.Column(db.String())
+    mimetype = db.Column(db.String())
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    def __str__ (self):
+        return 'Titolo =' + self.title + 'description =' + self.description + 'image =' + self.image + 'user =' +  str(self.user_id) + 'categoria =' + self.category
+    def __repr__(self):
+        return '<Project {}>'.format(self.title)
