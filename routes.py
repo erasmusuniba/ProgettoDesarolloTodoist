@@ -1,13 +1,16 @@
 #Importazione moduli necessari
+import mimetypes
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_required, current_user, login_user, logout_user
 from models import db,UserModel, Todo, Category,db, login_manager
-from form import TaskForm, RegistrationForm, LoginForm
+from form import TaskForm, RegistrationForm, LoginForm, ProjectForm
 from werkzeug.urls import url_parse
 from datetime import datetime
-from models import db 
+from models import db,Project
 from flask import Flask, send_from_directory
 from app import app
+from werkzeug.utils import secure_filename
+
 
 """
 Usiamo decoratori per definire percorsi URL nella nostra istanza dell'applicazione.
@@ -33,7 +36,7 @@ def register():
     """
     
     if current_user.is_authenticated:
-        return redirect(url_for('tasks'))
+        return redirect(url_for('projects'))
     #Creazione del modulo register form
     form = RegistrationForm()
      #Successivamente controlliamo se i dati inviati nel modulo sono validi. 
@@ -71,7 +74,7 @@ def login():
     Il valore di current_user è l'oggetto restituito da user loader 
     """
     if current_user.is_authenticated:
-        return redirect(url_for('tasks'))
+        return redirect(url_for('projects'))
 
     #Creazione del modulo login form
     form = LoginForm()
@@ -93,7 +96,7 @@ def login():
             #  Se il parametro successivo non viene ricevuto o non contiene un percorso relativo, reindirizziamo l'utente alla home page.
             next_page = request.args.get('next')
             if not next_page or url_parse(next_page).netloc != '':
-                next_page = url_for('tasks')
+                next_page = url_for('projects')
             return redirect(next_page)
 
     #restituzione del template html
@@ -106,16 +109,16 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
  
- #PERCORSO DI CREAZIONE DEL TASK
-@app.route('/create-task', methods=['GET', 'POST'])
+#PERCORSO DI CREAZIONE DEL TASK
+@app.route('/<int:id_project>/create-task', methods=['GET', 'POST'])
 @login_required #new line
-def tasks():
+def tasks(id_project):
 
     #Acquisizione dell'oggetto user
     user = current_user
     
     #Filtrare tutti i gli oggetti todo dell'utente
-    todo= Todo.query.filter_by(author=user) #new line
+    todo= Todo.query.filter_by(project_id=id_project) #new line
     print(todo)
     #Acquisizione della data corrente
     date= datetime.now()
@@ -141,7 +144,7 @@ def tasks():
             db.session.commit()
 
             #Restituzione del template tasks
-            return redirect(url_for('tasks'))
+            return redirect(url_for('tasks',id_project= id_project ))
 
            
         elif request.form.get('taskModify') is not None:
@@ -163,28 +166,29 @@ def tasks():
 
                 #ottenere l'oggetto categoria
                 category= Category.query.get(selected)
-
+                project = Project.query.filter_by(id=id_project).one()
                 #Creazione dell'oggetto Todo
-                todo_item = Todo(title=form.title.data, date=form.date.data, time= form.time.data, category= category.name, author=user) #new line
+                todo_item = Todo(title=form.title.data, date=form.date.data, time= form.time.data, category= category.name, author=project) #new line
                 print("ciao" + str(todo_item))
                 db.session.add(todo_item)
                 db.session.commit()
                 flash('Congratulations, you just added a new note')
-                return redirect(url_for('tasks'))
+                return redirect(url_for('tasks',id_project= id_project))
+                
 
     #Rendirizzamento al template task
     return render_template('task.html', title='Create Tasks', form=form, todo=todo, DateNow=now)
 
 
 #PERCORSO DI MODIFICA DEL TASK 
-@app.route('/<int:id>/edit', methods=['GET', 'POST'])
+@app.route('/<int:id_project>/<int:id_task>/edit', methods=['GET', 'POST'])
 @login_required #new line
-def edit(id):
+def edit(id_project,id_task):
     #Acquisizione dell'oggetto user
     user = current_user #new line
      #Filtrare tutti i gli oggetti todo dell'utente
     #Filtrare l'item con l'id associato al bottone taskDelete come "value"
-    todo_item = Todo.query.filter_by(id=id).one()
+    todo_item = Todo.query.filter_by(id=id_task).one()
     print(str(todo_item))
   
      #Creazione del form relativo al task 
@@ -198,7 +202,7 @@ def edit(id):
                 print("ciao")
                 #Ottenere la categoria inserita nel template
                 selected= form1.category.data
-
+                
 
                 #ottenere l'oggetto categoria
                 category= Category.query.get(selected)
@@ -216,13 +220,66 @@ def edit(id):
                 db.session.add(todo_item_new)
                 db.session.commit()
                 flash('Congratulations, you just added a new note')
-                return redirect(url_for('tasks'))
+                return redirect(url_for('tasks', id_project= id_project))
     #Rendirizzamento al template task
     return render_template('modifica.html', title='Modify Tasks', form=form1, todo=todo_item)
 
 """Flask memorizza l' ID utente degli utenti che hanno effettuato l'accesso nella sessione
 Gestione degli utenti autenticati
 """
+
+
+
+ #PERCORSO DI CREAZIONE DEL TASK
+@app.route('/create-project', methods=['GET', 'POST'])
+@login_required #new line
+def projects():
+
+    #Acquisizione dell'oggetto user
+    user = current_user
+    
+    #Filtrare tutti i gli oggetti project dell'utente
+    projects = Project.query.filter_by(author=user) #new line
+    print(projects)
+  
+    #Creazione del form relativo al task 
+    form= ProjectForm()
+
+    #Gestione del tipo della richiesta
+    if request.method == "POST":
+
+        #Gestione del click sul tasto delete del item
+        if request.form.get('showTask') is not None:
+            
+            #Filtrare l'id del progettos
+            id_project=request.form.get('showTask')
+            
+            #Restituzione del template tasks
+            return redirect(url_for('tasks', id_project= id_project))
+
+    #Gestione del click sul bottone aggiungi 
+        elif request.form.get('projectAdd') is not None:
+
+
+
+                #Creazione dell'oggetto Todo
+                f = request.files['file']
+                print(f)
+
+                filename = secure_filename(f.filename)
+               
+                project_item = Project(title=form.title.data,description= form.title.description, image= filename,mimetype=f.mimetype, user_id= user.id) #new line
+                
+                db.session.add(project_item)
+                db.session.commit()
+                print("ciao" + str(project_item))
+                flash('Congratulations, you just added a new note')
+                return redirect(url_for('projects'))
+
+    #Rendirizzamento al template task
+    return render_template('project.html', title='Create Project', form=form, projects= projects)
+
+
 #CARICAMENTO DELL'UTENTE
 @login_manager.user_loader
 def load_user(id):

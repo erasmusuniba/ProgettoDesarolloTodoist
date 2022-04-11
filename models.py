@@ -2,6 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 #Modulo per generare hash della password
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+
 from sqlalchemy import MetaData
 
 """
@@ -39,13 +41,16 @@ db = SQLAlchemy()
 #Flask-login ci rende disponibile la classe UserMixincon un'implementazione predefinita per tutte queste proprietà e metodi. 
 # Dobbiamo solo ereditare da esso nella nostra stessa classe User.
 class UserModel(UserMixin, db.Model):
+    #specificare nome tabella
     __tablename__ = 'users'
  
+    
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(80), unique=True)
     username = db.Column(db.String(100))
-    password_hash = db.Column(db.String())
-    todo = db.relationship('Todo', backref='author', lazy='dynamic')
+    password_hash = db.Column(db.String())    
+    #Field (1) in 1 a N
+    project = db.relationship('Project', backref='author', lazy='dynamic')
 
  
     def set_password(self,password):
@@ -58,6 +63,7 @@ class UserModel(UserMixin, db.Model):
 
 #CLASSE CATEGORY
 class Category(db.Model):
+    __tablename__ = 'category'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
 
@@ -67,31 +73,34 @@ class Category(db.Model):
 
 #CLASSE TODO
 class Todo(db.Model):
-
+    __tablename__ = 'todo'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(140))
     date = db.Column(db.Date())
     time = db.Column(db.Time())
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     category= db.Column(db.String, db.ForeignKey('category.id'))
 
     def __str__ (self):
-        return 'Titolo =' + self.title + 'data =' + str(self.date) + 'time =' + str(self.time) + 'user =' +  str(self.user_id) + 'categoria =' + self.category
+        return 'Titolo =' + self.title + 'data =' + str(self.date) + 'time =' + str(self.time) + 'project_id =' +  str(self.project_id) + 'categoria =' + self.category
     def __repr__(self):
         return '<ToDo {}>'.format(self.title)
 
 
-#CLASSE Project
+#CLASSE Projects
 class Project(db.Model):
-
+    __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(140))
     description = db.Column(db.String())
     image = db.Column(db.String())
     mimetype = db.Column(db.String())
+    #Field (N) in 1 a N
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    todo = db.relationship('Todo', backref='author', lazy='dynamic')
+
 
     def __str__ (self):
-        return 'Titolo =' + self.title + 'description =' + self.description + 'image =' + self.image + 'user =' +  str(self.user_id) + 'categoria =' + self.category
+        return 'Titolo =' + self.title + 'description =' + self.description + 'image =' + self.image + 'user =' +  str(self.user_id) 
     def __repr__(self):
         return '<Project {}>'.format(self.title)
