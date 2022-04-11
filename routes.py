@@ -153,7 +153,7 @@ def tasks(id_project):
             id =request.form.get('taskModify')
             
             #chiamata della route id
-            return redirect(url_for('edit', id=id))
+            return redirect(url_for('edit', id_project= id_project, id_task= id))
 
            
 
@@ -174,7 +174,7 @@ def tasks(id_project):
                 db.session.commit()
                 flash('Congratulations, you just added a new note')
                 return redirect(url_for('tasks',id_project= id_project))
-                
+
 
     #Rendirizzamento al template task
     return render_template('task.html', title='Create Tasks', form=form, todo=todo, DateNow=now)
@@ -189,6 +189,7 @@ def edit(id_project,id_task):
      #Filtrare tutti i gli oggetti todo dell'utente
     #Filtrare l'item con l'id associato al bottone taskDelete come "value"
     todo_item = Todo.query.filter_by(id=id_task).one()
+    project = Project.query.filter_by(id=id_project).one()
     print(str(todo_item))
   
      #Creazione del form relativo al task 
@@ -208,7 +209,7 @@ def edit(id_project,id_task):
                 category= Category.query.get(selected)
 
                 #Creazione dell'oggetto Todo
-                todo_item_new = Todo(title=form1.title.data, date=form1.date.data, time= form1.time.data, category= category.name, user_id=user.id) #new line
+                todo_item_new = Todo(title=form1.title.data, date=form1.date.data, time= form1.time.data, category= category.name, author=project) #new line
                 db.session.delete(todo_item)
                 db.session.commit()
                 print("ciao" + str(todo_item))
